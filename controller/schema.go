@@ -390,6 +390,9 @@ $$ LANGUAGE plpgsql`,
 	migrations.AddSteps(19,
 		migrateProcessArgs,
 	)
+	migrations.Add(20,
+		`ALTER TABLE artifacts ADD COLUMN manifest jsonb`,
+	)
 }
 
 func migrateDB(db *postgres.DB) error {
