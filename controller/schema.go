@@ -391,6 +391,8 @@ $$ LANGUAGE plpgsql`,
 		migrateProcessArgs,
 	)
 	migrations.Add(20,
+		`DROP TRIGGER release_artifacts_trigger ON release_artifacts`,
+		`DROP FUNCTION check_release_artifacts()`,
 		`ALTER TABLE artifacts ADD COLUMN manifest jsonb`,
 	)
 }
