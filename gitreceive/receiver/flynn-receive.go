@@ -94,7 +94,7 @@ Options:
 
 	fmt.Printf("-----> Building %s...\n", app.Name)
 
-	jobEnv := make(map[string]string)
+	jobEnv := make(map[string]string, 7)
 	jobEnv["BUILD_CACHE_URL"] = fmt.Sprintf("%s/%s-cache.tgz", blobstoreURL, app.ID)
 	if buildpackURL, ok := env["BUILDPACK_URL"]; ok {
 		jobEnv["BUILDPACK_URL"] = buildpackURL
@@ -106,11 +106,14 @@ Options:
 			jobEnv[k] = v
 		}
 	}
-	slugURL := fmt.Sprintf("%s/%s/slug.tgz", blobstoreURL, random.UUID())
+	slugArtifactID := random.UUID()
+	jobEnv["CONTROLLER_KEY"] = os.Getenv("CONTROLLER_KEY")
+	jobEnv["SLUGRUNNER_ARTIFACT_ID"] = os.Getenv("SLUGRUNNER_ARTIFACT_ID")
+	jobEnv["SLUG_ARTIFACT_ID"] = slugArtifactID
 
 	job := &host.Job{
 		Config: host.ContainerConfig{
-			Args:       []string{"/tmp/builder/build.sh", slugURL},
+			Args:       []string{"/tmp/builder/build.sh"},
 			Env:        jobEnv,
 			Stdin:      true,
 			DisableLog: true,
@@ -162,17 +165,8 @@ Options:
 
 	fmt.Printf("-----> Creating release...\n")
 
-	slugArtifact := &ct.Artifact{
-		Type: host.ArtifactTypeFile,
-		URI:  slugURL,
-		Meta: map[string]string{"blobstore": "true"},
-	}
-	if err := client.CreateArtifact(slugArtifact); err != nil {
-		return fmt.Errorf("Error creating slug artifact: %s", err)
-	}
-
 	release := &ct.Release{
-		ArtifactIDs: []string{os.Getenv("SLUGRUNNER_ARTIFACT_ID"), slugArtifact.ID},
+		ArtifactIDs: []string{slugArtifactID},
 		Env:         prevRelease.Env,
 		Meta:        prevRelease.Meta,
 	}
